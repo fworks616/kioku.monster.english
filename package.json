@@ -1,0 +1,21 @@
+{
+  "name": "kioku-english",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "dev:cloudflare": "wrangler dev",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "deploy": "wrangler deploy"
+  },
+  "type": "module",
+  "devDependencies": {
+    "wrangler": "^4.152.0"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  }
+}

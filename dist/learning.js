@@ -1,0 +1,3 @@
+export const dayKey=(date=new Date())=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+export function review(previous,known,now=Date.now()){const level=known?Math.min((previous?.level||0)+1,6):0;return {level,seen:(previous?.seen||0)+1,known:!!known,due:now+(known?[1,3,7,14,30,60][level-1]*86400000:600000),updated:now};}
+export function queueFor(words,records,deck,mode='all',now=Date.now()){return words.filter(w=>w.deck===deck&&(mode==='review'?records[w.id]&&records[w.id].due<=now:mode==='weak'?records[w.id]&&!records[w.id].known:true)).sort((a,b)=>{const priority=w=>!records[w.id]?1:records[w.id].due<=now?0:2;return priority(a)-priority(b)||(records[a.id]?.due||0)-(records[b.id]?.due||0)}).slice(0,10);}

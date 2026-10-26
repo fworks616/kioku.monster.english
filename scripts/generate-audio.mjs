@@ -1,0 +1,11 @@
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {mkdir,stat,writeFile} from 'node:fs/promises';
+import {words} from '../dist/words.js';
+const exec=promisify(execFile),dir=new URL('../dist/audio/',import.meta.url);
+await mkdir(dir,{recursive:true});
+const jobs=words.flatMap(w=>[{id:w.id+'-word',text:w.word,rate:'+0%'},{id:w.id+'-example',text:w.example,rate:'-5%'}]);
+let completed=0;
+await Promise.all(Array.from({length:4},async(_,worker)=>{for(let i=worker;i<jobs.length;i+=4){const j=jobs[i],file=new URL(j.id+'.mp3',dir);let existing=false;try{existing=(await stat(file)).size>1000}catch{}if(!existing)await exec(process.env.KIOKU_TTS_BIN||'.venv/bin/edge-tts',['--voice','en-US-AriaNeural','--rate='+j.rate,'--text',j.text,'--write-media',file.pathname]);completed++;if(completed%20===0)console.log(`${completed}/${jobs.length}`)}}));
+await writeFile(new URL('manifest.json',dir),JSON.stringify({voice:'en-US-AriaNeural',language:'en-US',wordRate:'+0%',exampleRate:'-5%',files:jobs.map(j=>j.id+'.mp3')},null,2)+'\n');
+console.log(`Ready: ${jobs.length} recordings`);

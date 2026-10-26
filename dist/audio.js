@@ -1,0 +1,12 @@
+// Prefer pre-generated US English audio; use an explicitly English voice if unavailable.
+export function selectEnglishVoice(voices){return voices.filter(v=>/^en([-_]|$)/i.test(v.lang)&&!/whisper|bells|boing|bubbles|bad news|good news|zarvox|trinoids|cellos|bahh|albert|fred|wobble|organ/i.test(v.name)).map(v=>({voice:v,score:(/^en[-_]US$/i.test(v.lang)?100:0)+(/natural|neural|premium|enhanced/i.test(v.name)?60:0)+(/Samantha|Siri|Aria|Jenny|Ava|Allison|Google US English/i.test(v.name)?35:0)+(!v.localService?5:0)})).sort((a,b)=>b.score-a.score)[0]?.voice||null}
+export function createPronunciationPlayer({onError=()=>{},AudioClass=globalThis.Audio,synth=globalThis.speechSynthesis,Utterance=globalThis.SpeechSynthesisUtterance}={}){
+let audio=null,sequence=0,finish=null;
+function stop(){sequence++;if(audio){audio.pause();audio.onended=null;audio.onerror=null;audio=null}if(synth)synth.cancel();if(finish){finish();finish=null}}
+async function englishVoice(){let voices=synth.getVoices();if(!voices.length){await new Promise(resolve=>{let settled=false;const done=()=>{if(settled)return;settled=true;synth.removeEventListener?.('voiceschanged',done);resolve()};synth.addEventListener?.('voiceschanged',done,{once:true});setTimeout(done,900)});voices=synth.getVoices()}return selectEnglishVoice(voices)}
+async function play({text,src,slow=false,onDone=()=>{}}){stop();const token=sequence;let completed=false;const done=()=>{if(completed)return;completed=true;onDone()};finish=done;
+let fallbackStarted=false;
+async function fallback(){if(fallbackStarted)return;fallbackStarted=true;if(token!==sequence)return done();if(!synth||!Utterance){onError('音声を再生できません。接続と端末の音声設定をご確認ください。');done();return}const voice=await englishVoice();if(token!==sequence)return done();if(!voice){onError('英語の音声を準備できません。接続を確認してもう一度お試しください。');done();return}const utterance=new Utterance(text);utterance.voice=voice;utterance.lang=voice.lang;utterance.rate=slow?.8:1;utterance.pitch=1;utterance.volume=1;utterance.onend=done;utterance.onerror=e=>{if(e.error!=='canceled'&&e.error!=='interrupted'&&token===sequence)onError('音声を再生できませんでした。もう一度タップしてください。');done()};synth.speak(utterance)}
+if(AudioClass&&src){try{audio=new AudioClass(src);audio.preload='auto';audio.playbackRate=slow?.8:1;audio.preservesPitch=true;audio.onended=done;audio.onerror=()=>{if(token===sequence)fallback()};await audio.play();return}catch{if(token!==sequence)return done();return fallback()}}return fallback()}
+return {play,stop};
+}

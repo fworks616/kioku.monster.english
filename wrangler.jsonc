@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kioku-english",
+  "main": "cloudflare/worker.mjs",
+  "compatibility_date": "2026-10-23",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kioku-english",
+      "database_id": "b77be70a-5ba3-4ac5-9a70-00c348a199ac",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
