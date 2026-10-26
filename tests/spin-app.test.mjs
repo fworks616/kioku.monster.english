@@ -39,10 +39,11 @@ test('Safari effects use media playback and unlock during the tap before resume 
 
 test('word roulette runs a five-question challenge and saves progress',async()=>{
   const app={innerHTML:''},toast={textContent:'',classList:{add(){},remove(){}}};
-  let saved;
+  let saved;const played=[];
   const context=vm.createContext({
     words,review,dayKey,Date,JSON,Math,String,Number,Array,Object,Promise,console,
     navigator:{vibrate(){}},setTimeout(){},
+    createPronunciationPlayer:()=>({play(request){played.push(request)}}),
     localStorage:{getItem(){return null},setItem(_key,value){saved=JSON.parse(value)}},
     document:{querySelector(selector){return selector==='#app'?app:toast},querySelectorAll(){return []}}
   });
@@ -59,6 +60,14 @@ test('word roulette runs a five-question challenge and saves progress',async()=>
   vm.runInContext("account=null;modal=null;renderCurrent()",context);
   vm.runInContext("wordPage()",context);
   assert.match(app.innerHTML,/ホームへ戻る/);
+  assert.match(app.innerHTML,/data-example="p499"/);
+  assert.ok(app.innerHTML.includes(words.find(w=>w.id==='p499').example));
+  vm.runInContext("speak(words.find(w=>w.id==='p499'),'example')",context);
+  assert.equal(played.at(-1).text,words.find(w=>w.id==='p499').example);
+  assert.equal(played.at(-1).src,'/audio/p499-example.mp3');
+  vm.runInContext('wheelGame.answered=true;wheelGame.chosen=0;home()',context);
+  assert.match(app.innerHTML,/class="answer-study"/);
+  assert.ok(app.innerHTML.includes(vm.runInContext('wheelQuestion().example',context)));
   vm.runInContext('selected=7;begin()',context);
   assert.match(app.innerHTML,/WHAT DOES THIS WORD MEAN/);
   vm.runInContext('choose(session.options.indexOf(session.questions[0].meaning))',context);

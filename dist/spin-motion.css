@@ -386,6 +386,25 @@
 .home .top-next>b { font-size: 12px; letter-spacing: 0; }
 .home .top-next small { display: none; }
 
+.answer-study { margin: 18px auto 8px; max-width: 480px; padding: 20px; background: #ffffff12; border: 1px solid #a78be45c; border-radius: 18px; }
+.answer-study h2 { font-size: 26px; color: #fff0aa; overflow-wrap: anywhere; }
+.answer-study .study-pronunciation { margin: 7px 0 15px; color: #d0c3ec; font-size: 13px; }
+.answer-study .study-example { font-size: 16px; line-height: 1.65; }
+.answer-study .study-translation { margin-top: 8px; font-size: 13px; line-height: 1.8; color: #d9d0eb; }
+.study-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.study-heading h2 { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.study-heading > button { flex-shrink: 0; white-space: nowrap; }
+.home .answer-study .pronounce-answer { margin: 0; }
+.wordbook-entry { min-width: 0; flex: 1; }
+.word-list article { align-items: flex-start; gap: 12px; }
+.word-list article > button { flex: 0 0 42px; }
+.wordbook-detail { margin-top: 10px; }
+.wordbook-detail summary { cursor: pointer; color: #7053bf; font-size: 12px; padding: 4px 0; }
+.word-list .wordbook-detail p { font-size: 13px; line-height: 1.7; margin-top: 8px; overflow-wrap: anywhere; }
+.word-list .wordbook-detail .study-example { color: #31234e; }
+.word-list .example-audio { display: flex; width: auto; height: auto; min-height: 38px; gap: 7px; padding: 7px 12px; margin: 0; border-radius: 12px; font-size: 12px; }
+.example-audio svg { width: 18px; height: 18px; }
+
 .next-btn {
   margin-top: 10px;
 }

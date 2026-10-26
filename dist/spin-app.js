@@ -387,10 +387,12 @@ function home(){
       </section>
     </section>
 
-    <!-- 次へボタン -->
-    ${wheelGame.answered?`
-      
-    `:''}
+    ${wheelGame.answered?`<section class="answer-study" aria-label="単語の解説">
+      <div class="study-heading"><h2>${esc(target.word)}</h2><button class="pronounce-answer" data-example="${target.id}" aria-label="${esc(target.word)}の例文を聞く">${icon('sound')}<span>例文を聞く</span></button></div>
+      <p class="study-pronunciation">${esc(target.ipa)} · ${esc(target.pos)}</p>
+      <p class="study-example" lang="en">${esc(target.example)}</p>
+      <p class="study-translation">${esc(target.translation)}</p>
+    </section>`:''}
   </main>`,'night');
 
   // 回答済みの場合はボールの位置を正解ポケットに維持
@@ -434,7 +436,7 @@ function launchBallToPocket(targetIndex,onComplete){
   const deltaNeeded=((targetAngle-(startAngle%360)+360)%360);
   const totalDeltaAngle=totalRounds*360+deltaNeeded;
 
-  const duration=4000; // 4.0秒（速すぎず優雅にボールを追える最適な速度）
+  const duration=2000; // 回転時間を従来の半分に短縮
   const startTime=performance.now();
   let lastSector=-1;
   let bounceSoundPlayed=false;
@@ -599,9 +601,9 @@ function choose(i){
 
 function next(){session.index++;session.options=null;session.answered=false;quiz()}
 function finish(){const xp=session.correct*20+(session.correct===5?50:0);show(`<main class="reveal final"><p class="overline">CHALLENGE COMPLETE</p><div class="medal">${session.correct===5?'👑':session.correct>=3?'🏆':'🌱'}</div><h1>${session.correct===5?'PERFECT!':session.correct>=3?'GREAT SPIN!':'NICE TRY!'}</h1><p>今日の言葉が、またひとつ力になった。</p><section><div><small>SCORE</small><b>${session.correct}<i>/5</i></b></div><div><small>REWARD</small><b>+${xp}<i> XP</i></b></div></section><button class="gold" data-page="home">もう一度回す ⟳</button><button class="ghost" data-page="words">覚えた単語を見る</button></main>`,'night')}
-function wordPage(){page='words';show(`<main class="plain"><header class="wordbook-header"><button class="back-button" data-page="home">← ホームへ戻る</button><p>WORD COLLECTION</p><h1>出会った言葉たち。</h1><small>${Object.keys(state.records).length} / ${words.length} WORDS</small></header><div class="word-list">${words.map(w=>`<article class="${state.records[w.id]?'seen':''}"><div><h2>${w.word}</h2><p>${w.meaning}</p></div><button data-word="${w.id}">${icon('sound')}</button></article>`).join('')}</div></main>`)}
+function wordPage(){page='words';show(`<main class="plain"><header class="wordbook-header"><button class="back-button" data-page="home">← ホームへ戻る</button><p>WORD COLLECTION</p><h1>出会った言葉たち。</h1><small>${Object.keys(state.records).length} / ${words.length} WORDS</small></header><div class="word-list">${words.map(w=>`<article class="${state.records[w.id]?'seen':''}"><div class="wordbook-entry"><div class="study-heading"><h2>${esc(w.word)}</h2><button class="example-audio" data-example="${w.id}" aria-label="${esc(w.word)}の例文を聞く">${icon('sound')}<span>例文を聞く</span></button></div><p>${esc(w.meaning)}</p><details class="wordbook-detail"><summary>例文・発音記号</summary><p class="study-pronunciation">${esc(w.ipa)} · ${esc(w.pos)}</p><p class="study-example" lang="en">${esc(w.example)}</p><p class="study-translation">${esc(w.translation)}</p></details></div><button data-word="${w.id}" aria-label="${esc(w.word)}の発音を聞く">${icon('sound')}</button></article>`).join('')}</div></main>`)}
 function stats(){page='stats';const learned=Object.values(state.records).filter(r=>r.level>=2).length,week=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return [d.toLocaleDateString('ja-JP',{weekday:'short'}),state.days[dayKey(d)]||0]}),max=Math.max(5,...week.map(x=>x[1]));show(`<main class="plain"><header><button class="back-button" data-page="home">← ホームへ戻る</button><h1>挑戦の記録。</h1><small>KEEP THE FIRE ALIVE</small></header><div class="stats"><div>🔥<b>${streak()}<small>日</small></b><p>連続学習</p></div><div>⚡<b>${total()*10}<small>XP</small></b><p>累計XP</p></div><div>✦<b>${learned}<small>語</small></b><p>習得済み</p></div></div><section class="week"><h2>今週の挑戦</h2><div>${week.map(x=>`<span><b>${x[1]}</b><i><em style="height:${Math.max(5,x[1]/max*100)}%"></em></i><small>${x[0]}</small></span>`).join('')}</div></section></main>`,'stats-shell')}
-function speak(w){if(!sound||!w)return;audio??=createPronunciationPlayer({onError:toast});audio.play({text:w.word,src:`/audio/${w.id}-word.mp3`})}
+function speak(w,kind='word'){if(!sound||!w)return;audio??=createPronunciationPlayer({onError:toast});audio.play({text:kind==='example'?w.example:w.word,src:`/audio/${w.id}-${kind}.mp3`})}
 
 async function submitAuth(event){event.preventDefault();const form=event.currentTarget,button=form.querySelector('button[type="submit"]'),error=form.querySelector('#auth-error');button.disabled=true;button.textContent='処理中…';error.textContent='';try{const values=Object.fromEntries(new FormData(form));const response=await fetch('/api/'+authMode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(values)});const result=await response.json();if(!response.ok)throw Error(result.error||'ログインできませんでした');account=result.user;state={records:{},days:{},bookmarks:[],goal:5,requeue:[],questionCount:0,...result.data};wheelGame=null;modal=null;renderCurrent();toast(authMode==='signup'?'アカウントを作成しました':'ログインしました')}catch(e){error.textContent=e.message||'接続を確認してください';button.disabled=false;button.textContent=authMode==='signup'?'アカウントを作成':'ログイン'}}
 async function signout(){await saveQueue;try{const response=await fetch('/api/signout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!response.ok)throw Error();account=null;let guest;try{guest=JSON.parse(localStorage.getItem('kioku-v1'))}catch{}state={records:{},days:{},bookmarks:[],goal:5,...guest};wheelGame=null;modal=null;renderCurrent();toast('ログアウトしました')}catch{toast('ログアウトできませんでした')}}
@@ -636,6 +638,7 @@ function bind(){
   });
   document.querySelectorAll('[data-wheel-speak]').forEach(b=>b.onclick=()=>speak(words.find(w=>w.id===b.dataset.wheelSpeak)));
   document.querySelectorAll('[data-word]').forEach(b=>b.onclick=()=>speak(words.find(w=>w.id===b.dataset.word)));
+  document.querySelectorAll('[data-example]').forEach(b=>b.onclick=()=>speak(words.find(w=>w.id===b.dataset.example),'example'));
 }
 
 const resumeWheelSpin=!!wheelGame?.spinning;
